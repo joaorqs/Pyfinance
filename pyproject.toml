@@ -1,0 +1,12 @@
+[project]
+name = "stock-tracker"
+version = "0.1.0"
+description = "Serverless stock tracker using DuckDB + Parquet"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.pyright]
+reportMissingImports = false
+
+[tool.isort]
+profile = "black"

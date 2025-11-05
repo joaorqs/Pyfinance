@@ -1,0 +1,33 @@
+watchlist:
+  - ticker: AAPL
+    currency: USD
+    zone_low: 165.0
+    zone_high: 175.0
+    notify_on_cross: true
+    cooloff_days: 2
+    tags: ["mega-cap", "quality"]
+    notes: "Scale near 170"
+  - ticker: QCOM
+    currency: USD
+    zone_low: 115.0
+    zone_high: 130.0
+    notify_on_cross: true
+    cooloff_days: 1
+    tags: ["semis"]
+    notes: "Add on dips"
+  - ticker: HPQ
+    currency: USD
+    zone_low: 20.0
+    zone_high: 26.0
+    notify_on_cross: true
+    cooloff_days: 1
+    tags: ["pc"]
+    notes: "Valuation floor"
+  - ticker: NVDA
+    currency: USD
+    zone_low: 170.0
+    zone_high: 190.0
+    notify_on_cross: true
+    cooloff_days: 1
+    tags: ["gpus"]
+    notes: "buy on dip"
