@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = PROJECT_ROOT / "db" / "markets.duckdb"
 WATCHLIST_YAML = PROJECT_ROOT / "data" / "watchlist.yaml"
 
+
 @dataclass
 class WatchItem:
     ticker: str
@@ -47,62 +48,55 @@ def load_watchlist_yaml(path: Path = WATCHLIST_YAML) -> List[WatchItem]:
     if not path.exists():
         raise FileNotFoundError(f"Watchlist YAML not found at {path}")
     data = yaml.safe_load(path.read_text()) or {}
-    items = []
-    for r in data.get("watchlist", []):
-        tags = r.get("tags", [])
+    items: List[WatchItem] = []
+    for record in data.get("watchlist", []):
+        tags = record.get("tags", [])
         tags_str = ",".join(tags) if isinstance(tags, list) else (tags or "")
         items.append(
             WatchItem(
-                ticker=r["ticker"],
-                currency=r.get("currency", "USD"),
-                zone_low=float(r["zone_low"]),
-                zone_high=float(r["zone_high"]),
-                notify_on_cross=bool(r.get("notify_on_cross", True)),
-                cooloff_days=int(r.get("cooloff_days", 1)),
+                ticker=record["ticker"],
+                currency=record.get("currency", "USD"),
+                zone_low=float(record["zone_low"]),
+                zone_high=float(record["zone_high"]),
+                notify_on_cross=bool(record.get("notify_on_cross", True)),
+                cooloff_days=int(record.get("cooloff_days", 1)),
                 tags=tags_str,
-                notes=r.get("notes", ""),
+                notes=record.get("notes", ""),
             )
         )
     return items
 
 
 def sync_watchlist_replace() -> None:
-    """
-    Replace DuckDB `watchlist` with YAML exactly:
-    - Adds new tickers
-    - Updates existing
-    - Removes rows not present in YAML
-    """
+    """Replace the DuckDB ``watchlist`` table so it matches the YAML file exactly."""
     con = connect()
     ensure_schema(con)
     items = load_watchlist_yaml()
 
-    # Create a temp table and swap-in to guarantee exact match
     con.execute(
         """
         CREATE TEMP TABLE tmp_watchlist AS SELECT * FROM watchlist WHERE 1=0;
         """
     )
 
-    for it in items:
+    for item in items:
         con.execute(
             """
             INSERT INTO tmp_watchlist (ticker,currency,zone_low,zone_high,notify_on_cross,cooloff_days,tags,notes,updated_at)
             VALUES (?,?,?,?,?,?,?,?, now());
             """,
             [
-                it.ticker,
-                it.currency,
-                it.zone_low,
-                it.zone_high,
-                it.notify_on_cross,
-                it.cooloff_days,
-                it.tags,
-                it.notes,
+                item.ticker,
+                item.currency,
+                item.zone_low,
+                item.zone_high,
+                item.notify_on_cross,
+                item.cooloff_days,
+                item.tags,
+                item.notes,
             ],
         )
 
-# Deduplicate inside DuckDB before swap-in
     con.execute("BEGIN TRANSACTION;")
     con.execute("DELETE FROM watchlist;")
     con.execute(
@@ -125,9 +119,10 @@ def sync_watchlist_replace() -> None:
     con.execute("COMMIT;")
     con.close()
 
+
 def get_tickers() -> List[str]:
     con = connect()
     ensure_schema(con)
     rows = con.execute("SELECT ticker FROM watchlist ORDER BY ticker").fetchall()
     con.close()
-    return [r[0] for r in rows]
+    return [row[0] for row in rows]
