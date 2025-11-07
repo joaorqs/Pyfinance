@@ -8,7 +8,10 @@ import streamlit as st
 from src.core.watchlist import PROJECT_ROOT, connect, ensure_schema
 
 DATA_ROOT = PROJECT_ROOT / "data" / "prices"
-DATA_GLOB = (DATA_ROOT / "**" / "**" / "*.parquet").as_posix()
+# DuckDB globbing allows only a single ``**`` wildcard, so keep the pattern to
+# ``**/*.parquet`` to avoid ``IO Error: Cannot use multiple '**' in one path`` when
+# the dashboard queries the Parquet lake.
+DATA_GLOB = (DATA_ROOT / "**" / "*.parquet").as_posix()
 
 st.set_page_config(page_title="Market Watchlist", layout="wide")
 
